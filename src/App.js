@@ -122,7 +122,8 @@ class App extends React.Component {
       crop.splice(index,1);
     }
 
-    for(let i = 4; i < numCategories; i++){
+    let newNumCategories = numCategories < 15 ? numCategories : 15;
+    for(let i = 4; i < newNumCategories; i++){
       let index = Math.floor(Math.random() * crop.length);
       categoriesReturn.push(...crop.splice(index,1));
     }
