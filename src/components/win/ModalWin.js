@@ -3,19 +3,17 @@ import StatsDisplay from "./StatsDisplay";
 import WinCountries from "./WinCountries";
 import './modalWin.scss';
 import Close from '../../assets/icons/close.svg';
-import Twemoji from '../../assets/Twemoji.js'
 import { DATA } from "../../assets/data";
+import { COUNTRYEMOJI } from "../../assets/data";
 
-const num = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣"];
-const col = ["🟪", "🟦", "🟩", "🟨", "🟧", "🟥"];
+
 const FocusTrap = require('focus-trap-react');
-
-
 class ModalWin extends React.Component {
   constructor(props) {
     super(props);
 
     this.share = this.share.bind(this);
+    this.update = this.update.bind(this);
     this.stopPropagation = this.stopPropagation.bind(this);
 
   }
@@ -27,43 +25,39 @@ class ModalWin extends React.Component {
     }
   }
 
+  update(e) {
+    e.preventDefault();
+    this.props.updateSettings(e.target.value);
+  }
+
 
   /* what is returned when share clicked */
   share(e) {
     // Get day of challenge
-    const start = new Date("April 20, 2022 00:00:00");
-    let today = new Date();
-    today.setHours(0, 0, 0, 0);
+
     const history = this.props.history;
-
-    const gameNumber = Math.round((today - start) / 86400000);
     const guessAmount = this.props.win ? history.length : "X";
-    var text = "#Statdle " + gameNumber + "\n" + guessAmount + "/10 Guesses\n";
-
-    // need to loop through both catagories, and 
+    let text = "#Statdle " + guessAmount + "/10\n";
+    let max = 0;
 
     for (let i = 0; i < history.length; i++) {
-      text += num[history[i].correct];
-      for (let j = 0; j < history[i].range.length; j++) {
-        let difference = history[i].range[j];
-        if (difference === 0) {
-          text += col[0];
-        } else if (difference <= 10) {
-          text += col[1];
-        } else if (difference <= 25) {
-          text += col[2];
-        } else if (difference <= 50) {
-          text += col[3];
-        } else if (difference <= 100) {
-          text += col[4];
-        } else if (difference > 100) {
-          text += col[5];
-        }
+      text += "\n" + COUNTRYEMOJI[history[i].code];
+      
+      let correct = history[i].correct;
+      
+      if(i === 0){
+        max = correct;
       }
-      text += "\n";
+
+      for(let i = 0; i < correct; i++){
+        text += "🟪";
+      }
+      for(let i = correct; i < max; i++){
+        text += "⬛"
+      }
     }
 
-    text += "\nstatdle.github.io/";
+    text += "\n9ps.github.io/statdle2/";
 
     navigator.clipboard.writeText(text);
     this.props.togglePopup(3);
@@ -90,31 +84,8 @@ class ModalWin extends React.Component {
           <button className="btn btn--wide btn--active" onClick={this.share}>
             Share
           </button>
-          <details className="info">
-            <summary className="info__summary">Share content symbolism</summary>
-            <p className="info__text">Per Guess:</p>
-
-            <p className="info__text">
-              <Twemoji className="emoji" emoji={num[0]} />
-              <Twemoji className="emoji" emoji={num[1]} />
-              <Twemoji className="emoji" emoji={num[2]} />
-              <Twemoji className="emoji" emoji={num[3]} />
-              <Twemoji className="emoji" emoji={num[4]} />
-            </p>
-            <p className="info__text">
-              Amount of catagories with new information</p>
-
-            <p className="info__text">
-              <Twemoji className="emoji" emoji={col[5]} />
-              <Twemoji className="emoji" emoji={col[4]} />
-              <Twemoji className="emoji" emoji={col[3]} />
-              <Twemoji className="emoji" emoji={col[2]} />
-              <Twemoji className="emoji" emoji={col[1]} />
-              <Twemoji className="emoji" emoji={col[0]} />
-            </p>
-            <p className="info__text">
-              Rank range of a catagory, where red is a rank range of {">"} 100, and purple is 0</p>
-          </details>
+          
+          <button className="btn btn--wide btn--active" onClick={() => this.props.reset()}>Reset</button>
           <StatsDisplay stats={stats} />
           <WinCountries history={this.props.history} win={this.props.win} />
         </>
@@ -126,6 +97,7 @@ class ModalWin extends React.Component {
           <WinCountries history={this.props.history} win={false} />
           <p className="info__text">
             (finish playing the round for sharing options)
+            
           </p>
         </>
       );
@@ -155,7 +127,16 @@ class ModalWin extends React.Component {
                 <img className="icons" src={Close} alt="Close" aria-label="close" />
               </button>
             </div>
-            <div className="modal__body">{content}</div>
+            <div className="modal__body">{content}
+            
+              <div style={{textAlign: "center", marginTop: "20px"}}>
+                <label htmlFor="categoriesSelect">Number of categories (requires refresh):</label>
+                <input type="number" id="categoriesSelect" name="categoriesSelect"
+                  min="4" max="15" onChange={this.update}></input>
+              </div>
+            </div>
+
+            
           </div>
         </div>
       </FocusTrap>

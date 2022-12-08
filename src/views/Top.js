@@ -7,7 +7,7 @@ const Top = (props) => {
 
   return (
     <nav className="nav" role="menubar">
-      <h1 className="nav__item nav__left">Statdle</h1>
+      <h1 className="nav__item nav__left">Statdle2</h1>
       <b className="nav__item"
         role="menuitem"
       >{props.guessCount + " / 10 Guesses"}</b>

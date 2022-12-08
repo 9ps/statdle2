@@ -127,3 +127,13 @@
     display: flex;
   }
 }
+
+#categoriesSelect {
+  background-color: $w1;
+  color: $w10;
+  text-align: center;
+  display: flex;
+  padding: 10px;
+  margin-top: 20px;
+  width: 80%;
+}

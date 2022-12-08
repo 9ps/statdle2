@@ -1,5 +1,4 @@
 import React from "react";
-import ReactGA from "react-ga4";
 
 // import Setup from "./services/Setup";
 
@@ -26,24 +25,35 @@ class App extends React.Component {
     this.updateDisplayWin = this.updateDisplayWin.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.togglePopup = this.togglePopup.bind(this);
-    this.setStorageGame = this.setStorageGame.bind(this);
-    this.updateStorageGame = this.updateStorageGame.bind(this);
     this.updateStorageStats = this.updateStorageStats.bind(this);
     this.parseValue = this.parseValue.bind(this);
+    this.reset = this.reset.bind(this);
 
     this.state = {
       categories: {}, // {<categoryname>: {high: <0>, highName: <"">, low: <0> lowName: <""> target: <0>, activeRow: <0>}, ...}
       history: [], //[{name: "", correct: 0, range: N}, ...]
-      modalType: 1, //0: "none", 1: "how" 2: "win from top" 3: "win"
+      modalType: 0, //0: "none", 1: "how" 2: "win from top" 3: "win"
       popupType: 0, //0: "none", 1: "Already Guessed", 2: "Invalid Country", 3: "Copied to Clipboard"
       win: false,
       ended: false,
     };
   }
 
+  reset() {
+    console.log("reset!");
+    this.setState({
+      categories: {}, // {<categoryname>: {high: <0>, highName: <"">, low: <0> lowName: <""> target: <0>, activeRow: <0>}, ...}
+      history: [], //[{name: "", correct: 0, range: N}, ...]
+      modalType: 0, //0: "none", 1: "how" 2: "win from top" 3: "win"
+      popupType: 0, //0: "none", 1: "Already Guessed", 2: "Invalid Country", 3: "Copied to Clipboard"
+      win: false,
+      ended: false,
+    });
+
+    this.setupGame();
+  }
+
   componentDidMount() {
-    // localStorage.clear();
-    // this.seedTest();
     this.setupStats();
     this.setupGame();
   }
@@ -62,73 +72,18 @@ class App extends React.Component {
     }
   }
 
-
-  seedTest() {
-    const seedrandom = require("seedrandom");
-    let count = Array(15).fill(0);
-    for(let i = 0; i < 20; i++){
-      let arr = this.easySeedCategories(
-        i,
-        seedrandom
-      );
-      if(arr.length !== 4){
-        console.log("!!");
-      }
-      for(let i in arr){
-        count[arr[i]] += 1;
-      }
-    }
-    console.log("a", count);
-  }
-
-  seedTest2() {
-    const seedrandom = require("seedrandom");
-    let da = new Date();
-    let today = da.toDateString();
-    for(let i = 0; i < 20; i++){
-      let arr = this.easySeedCategories(
-        today + i,
-        seedrandom
-      );
-      if(arr.length !== 4){
-        console.log(arr);
-      }
-      console.log(arr);
-    }
-  }
-
   /* pick target country and categories */
   setupGame() {
 
-    // check localStorage
-    let da = new Date();
-    let today = da.toDateString();
-    
-    if (localStorage.getItem("game")) {
-      this.setState({
-        modalType: 0,
-      });
-
-      const game = JSON.parse(localStorage.getItem("game"));
-      if (game.date === today && !game.guessHistory) {
-        this.setState({
-          targetCountry: game.targetCountry,
-          categories: game.categories,
-          history: game.history,
-          win: game.win,
-          ended: game.ended,
-        });
-        return;
-      }
+    let numCategories = 4;
+    if (localStorage.getItem("settings")){
+      let settings = JSON.parse(localStorage.getItem("settings"));
+      numCategories = settings.numCategories;      
     }
 
-    // Generate randomness from todays date
-    const seedrandom = require("seedrandom");
-    const targetCountry = this.seedTarget(today, seedrandom);
-    const seededCategories = this.easySeedCategories(
-      today,
-      seedrandom
-    );
+    const targetCountry = this.seedTarget();
+    console.log("target country:", DATA[targetCountry][0][1]);
+    const seededCategories = this.seedCategories(numCategories);
     // Generate inital state values
     const initialCategories = {};
     for (let i in seededCategories) {
@@ -148,46 +103,28 @@ class App extends React.Component {
       categories: initialCategories,
       targetCountry: targetCountry,
     });
-
-
-    this.setStorageGame(targetCountry, initialCategories, today);
   }
 
-  /* generate 1 random value */
-  seedTarget(seed, seedrandom) {
-    const gen = seedrandom(seed);
-    const countryRandIndex = Math.floor(gen() * NUMCOUNTRIES); //country randomizer
-
+  seedTarget() {
+    const countryRandIndex = Math.floor(Math.random() * NUMCOUNTRIES); //country randomizer
     return Object.keys(DATA)[countryRandIndex];
   }
 
 
-  /* generate 4 randomish categories values */
-  // TODO make this more normal
-  seedCategories(seed, seedrandom) {
-    let initialCategories = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-    let categoriesReturn = [];
-
-    let mandatory = Math.floor(seedrandom(seed)() * 3);
-    categoriesReturn.push(mandatory);
-    let categoriesCopy = initialCategories.filter(e => e !== mandatory);
-
-    // other three categories seeding
-    for (let i = 0; i < 3; i++) {
-      const randomIndex = Math.floor(seedrandom(seed + i)() * categoriesCopy.length);
-      const newCategory = categoriesCopy.splice(randomIndex, 1);
-      categoriesReturn.push(...newCategory);
-    }
-    return categoriesReturn;
-  }
-
-  easySeedCategories(seed, seedrandom) {
+  seedCategories(numCategories) {
     let mandatory = [[0,1],[2,3],[4,5,6,7],[8,9,10,11,12,13,14]];
+    let crop = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14];
     let categoriesReturn = [];
 
     for (let i = 0; i < 4; i++) {
-      let index = Math.floor(seedrandom(seed + (i*2))() * mandatory[i].length);
+      let index = Math.floor(Math.random() * mandatory[i].length);
       categoriesReturn.push(mandatory[i][index]);
+      crop.splice(index,1);
+    }
+
+    for(let i = 4; i < numCategories; i++){
+      let index = Math.floor(Math.random() * crop.length);
+      categoriesReturn.push(...crop.splice(index,1));
     }
     return categoriesReturn;
   }
@@ -269,8 +206,6 @@ class App extends React.Component {
       history: finalHistory,
       ended: ended,
     });
-
-    this.updateStorageGame(newCategories, finalHistory, false, ended);
   }
 
   parseValue(value, i){
@@ -288,7 +223,7 @@ class App extends React.Component {
 
   updateDisplayWin(newCategories, newHistory, newCountry, newValues) {
 
-    this.updateStorageStats(this.state.history.length);
+    this.updateStorageStats(this.state.history.length + 1);
     this.togglePopup(4);
     this.toggleModal(3);
 
@@ -308,9 +243,9 @@ class App extends React.Component {
       };
       newHistory.range.push(0);
     }
-    newHistory.correct = 4;
-    let finalHistory = this.state.history.concat(newHistory);
 
+    newHistory.correct = Object.keys(this.state.categories).length;
+    let finalHistory = this.state.history.concat(newHistory);
 
     this.setState({
       categories: newCategories,
@@ -318,35 +253,14 @@ class App extends React.Component {
       win: true,
       ended: true,
     });
-
-    this.updateStorageGame(newCategories, finalHistory, true, true);
     return;
   }
 
-  /* initially setting local storage */
-  setStorageGame(targetCountry, categories, date) {
-    let game = {};
-    game.targetCountry = targetCountry;
-    game.categories = categories;
-    game.date = date;
-
-    game.history = [];
-    game.win = false;
-    game.ended = false;
-
-    localStorage.setItem("game", JSON.stringify(game));
-  }
-
   /* update values after country entry */
-  updateStorageGame(categories, history, win = false, ended = false) {
-
-    let game = JSON.parse(localStorage.getItem("game")) || {};
-    game.categories = categories;
-    game.history = history;
-    game.win = win;
-    game.ended = ended;
-
-    localStorage.setItem("game", JSON.stringify(game));
+  updateSettings(numCategories) {
+    let settings = JSON.parse(localStorage.getItem("settings")) || {};
+    settings.numCategories = numCategories;
+    localStorage.setItem("settings", JSON.stringify(settings));
   }
 
   updateStorageStats(guesses) {
@@ -357,15 +271,15 @@ class App extends React.Component {
     let tally = stats.tally || Array(11).fill(0);
 
     // if didnt get a score
-
-
+    console.log(guesses);
     tally[guesses] += 1;
 
     if (guesses < best || best === 0) {
       best = guesses;
     }
 
-    if (!guesses){
+    if (guesses){
+      
       average = Math.round(((average * rounds + guesses) / (rounds + 1)) * 10) / 10;
     }
 
@@ -405,10 +319,6 @@ class App extends React.Component {
     this.setState({
       modalType: type,
     });
-
-    ReactGA.gtag("event", "select_content", {
-      content_type: type,
-    });
   }
 
   /* -------------------- */
@@ -427,6 +337,8 @@ class App extends React.Component {
           <ModalWin
             toggleModal={this.toggleModal}
             togglePopup={this.togglePopup}
+            reset={this.reset}
+            updateSettings={this.updateSettings}
 
             targetCountry={this.state.targetCountry}
             categories={this.state.categories}
@@ -435,7 +347,6 @@ class App extends React.Component {
             special={false}
             win={this.state.win}
             ended={this.state.ended}
-
           />
         );
         break;
@@ -444,6 +355,8 @@ class App extends React.Component {
           <ModalWin
             toggleModal={this.toggleModal}
             togglePopup={this.togglePopup}
+            reset={this.reset}
+            updateSettings={this.updateSettings}            
 
             targetCountry={this.state.targetCountry}
             categories={this.state.categories}
