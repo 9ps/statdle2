@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/statdle2/static/css/main.703d7ef9.css",
+    "main.js": "/statdle2/static/js/main.041f1df7.js",
+    "index.html": "/statdle2/index.html",
+    "static/media/help.svg": "/statdle2/static/media/help.8a2faa64e1fdbdf3070e2b5950dc6dc1.svg",
+    "static/media/results.svg": "/statdle2/static/media/results.89406559d5a0112bf1e53bc8a7f8729f.svg",
+    "static/media/close.svg": "/statdle2/static/media/close.604f17ae9e7f7ab96de76a3408313180.svg",
+    "main.703d7ef9.css.map": "/statdle2/static/css/main.703d7ef9.css.map",
+    "main.041f1df7.js.map": "/statdle2/static/js/main.041f1df7.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.703d7ef9.css",
+    "static/js/main.041f1df7.js"
+  ]
+}
